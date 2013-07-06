@@ -75,3 +75,10 @@ https://github.com/oshaughnessy/squirrelmail-spamrule.
 ## Copyright
 
 Copyright (c) 2002-2007 O'Shaughnessy Evans <shaug-sqml @ wumpus.org>
+
+
+## License
+
+This code is licensed under the Perl Artistic License, version 2.0.  For
+more information, please see the file Artistic_2.0, which was included with
+this distribution, or http://opensource.org/licenses/artistic-license-2.0.php
