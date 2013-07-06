@@ -1,0 +1,12 @@
+# $Id: reject-bulk,v 1.1 2002/12/14 01:26:30 root Exp $
+#
+# Blackhole mail with a Priority of "bulk" or "low"
+exception {
+    SHELL=/bin/sh
+
+    if (/^(X-)?Priority: (bulk|low)/)
+    {
+	xfilter "reformail -A '$JUNK_TAG: rejected: bulk mail'"
+	to $JUNK
+    }
+}

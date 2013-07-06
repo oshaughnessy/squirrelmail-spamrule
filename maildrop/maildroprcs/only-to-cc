@@ -1,0 +1,79 @@
+# $Id: only-to-cc,v 1.6 2003/02/05 21:59:33 root Exp $
+#
+# Reject messages that don't have $RECIPIENT or any of a list of aliases
+# in the To, Cc, Resent-To, or Resent-Cc headers.
+exception {
+    import RECIPIENT
+    SHELL=/bin/sh
+    HASADDR=0
+
+    # search for the envelope recipient in the destination headers
+    # if not found, search for each of the user's aliases
+    if (hasaddr($RECIPIENT))
+    {
+        HASADDR=1
+
+    }
+    else
+    {
+        # search To, Resent-To, Cc, Resent-Cc, Delivered-To (qmail Bcc),
+        # and Apparently-To (sendmail Bcc)
+        exception {
+            /^(Resent-)?(To): .*/
+            foreach (getaddr $MATCH) =~ /.+/
+            {
+                if (lookup($MATCH, '.mailfilters/recipients+'))
+                {
+                    HASADDR=1
+                }
+            }
+
+            if (! $HASADDR)
+            {
+                /^(Resent-)?(Cc): .*/
+                foreach (getaddr $MATCH) =~ /.+/
+                {
+                    if (lookup($MATCH, '.mailfilters/recipients+'))
+                    {
+                        HASADDR=1
+                    }
+                }
+            }
+
+            if (! $HASADDR)
+            {
+                /^Apparently-To: .*/
+                foreach (getaddr $MATCH) =~ /.+/
+                {
+                    if (lookup($MATCH, '.mailfilters/recipients+'))
+                    {
+                        HASADDR=1
+                    }
+                }
+            }
+
+            if (! $HASADDR)
+            {
+                /^Delivered-To: .*/
+                foreach (getaddr $MATCH) =~ /.+/
+                {
+                    if (lookup($MATCH, '.mailfilters/recipients+'))
+                    {
+                        HASADDR=1
+                    }
+                }
+            }
+        }
+    }
+
+    if (! $HASADDR)
+    {
+        xfilter "reformail -A '$JUNK_TAG: rejected: \"$RECIPIENT\" or alias not in headers'"
+        to $JUNK
+    }
+    else
+    {
+        xfilter "reformail -A '$JUNK_TAG: only-to-cc: \"$RECIPIENT\" or alias found in headers'"
+    }
+
+}

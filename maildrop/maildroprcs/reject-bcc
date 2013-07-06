@@ -1,0 +1,13 @@
+# $Id: reject-bcc,v 1.1 2002/12/14 01:26:30 root Exp $
+#
+# Reject mail that has a Bcc header
+# See also:  http://cr.yp.to/mess822.html
+exception {
+    SHELL=/bin/sh
+
+    if (/^Bcc:/)
+    {
+	xfilter "reformail -A '$JUNK_TAG: rejected: Bcc header'"
+	to $JUNK
+    }
+}

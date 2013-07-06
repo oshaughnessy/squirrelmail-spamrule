@@ -1,0 +1,18 @@
+# $Id: spamassassin,v 1.2 2003/01/07 21:43:19 root Exp $
+#
+# Check Spam Assassin for the likelihood that a message is Spam.
+# If so, send it to Junk
+exception {
+    import SENDER
+    SHELL=/bin/sh
+
+    # is the envelope sender in the allowed senders list?
+    xfilter '/usr/local/bin/spamc -f'
+    IS_SPAM=`/usr/local/bin/reformail -x X-Spam-Flag:`
+
+    if ($IS_SPAM)
+    {
+        xfilter "reformail -A '$JUNK_TAG: rejected: by spamassassin'"
+        to $JUNK
+    }
+}

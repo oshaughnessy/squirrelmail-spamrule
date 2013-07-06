@@ -1,0 +1,14 @@
+# $Id: reject-not822,v 1.3 2002/12/14 01:26:30 root Exp $
+#
+# Reject messages that don't have an RFC 822-compliant header
+# See also:  http://www.superscript.com/qtools/822headerok.html
+exception {
+    SHELL=/bin/sh
+
+    IS822=`/usr/local/bin/822headerok`
+    if ($RETURNCODE != 0)
+    {
+        xfilter "reformail -A '$JUNK_TAG: rejected: not RFC822-compliant'"
+        to $JUNK
+    }
+}

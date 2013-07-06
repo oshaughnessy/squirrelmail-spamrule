@@ -1,0 +1,14 @@
+# $Id: reject-ad,v 1.4 2002/12/14 01:26:30 root Exp $
+#
+# Blackhole mail with a Subject that that starts with "AD" or "ADV" (commonly
+# used by spammers to foolishly identify their spam.  Thanks!).  Also
+# reject mail that has an X-Advertisement or X-Promotion header
+exception {
+    SHELL=/bin/sh
+
+    if (/^Subject: (AD|ADV)[: ]/ || /^X-Advertisement:/ || /^X-Promotion:/)
+    {
+	xfilter "reformail -A '$JUNK_TAG: rejected: advertisement'"
+	to $JUNK
+    }
+}

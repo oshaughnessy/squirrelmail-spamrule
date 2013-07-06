@@ -1,0 +1,25 @@
+# $Id: reject-from,v 1.3 2002/12/14 01:26:30 root Exp $
+#
+# Reject mail that's from any of the addresses listed in the user's config
+exception {
+    import SENDER
+    SHELL=/bin/sh
+
+    # is the envelope sender in the deny list?
+    if (lookup($SENDER, '.mailfilters/senders-'))
+    {
+	xfilter "reformail -A '$JUNK_TAG: rejected: sender \"$SENDER\" blocked'"
+	to $JUNK
+    }
+
+    # what about the header sender?
+    /^From: .*/
+    foreach (getaddr $MATCH) =~ /.+/
+    {
+        if (lookup($MATCH, '.mailfilters/senders-'))
+        {
+	  xfilter "reformail -A '$JUNK_TAG: rejected: sender \"$MATCH\" blocked'"
+          to $JUNK
+        }
+    }
+}

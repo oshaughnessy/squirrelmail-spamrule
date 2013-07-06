@@ -1,0 +1,6 @@
+This directory includes a sample global maildrop config file and
+individual filter files that can be included from a user's
+.mailfilter.  The global file needs to be somewhere like
+/usr/local/etc/maildroprc, and the individual files need to be
+in their own directory, somewhere like /usr/local/etc/maildroprcs.
+Your own maildrop installation may expect somewhere else, like /etc.

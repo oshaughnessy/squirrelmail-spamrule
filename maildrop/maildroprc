@@ -1,0 +1,71 @@
+##
+# /usr/local/etc/maildroprc:  global maildrop config file
+# 
+# See maildropfilter(5) and http://www.flounder.net/~mrsam/maildrop/
+# for more info.
+# 
+# $Id: maildroprc,v 1.10 2003/07/01 07:40:24 root Exp root $
+##
+
+# where to deliver mail by default
+DEFAULT="Incoming"
+
+# what program is used to deliver mail
+SENDMAIL="/usr/local/sbin/sendmail"
+
+# where to send junk mail
+JUNK="mail/Junk"
+TRASH="mail/Trash"
+
+# junk filter tag
+JUNK_TAG="X-Spamrule"
+
+# virus filter tag
+VIRUS_TAG="X-Antivirus"
+
+# where to send virus-infected mail
+VIRUS_BOX="/usr/mail/quarantine"
+
+# sitewide filter tag
+SITEWIDE_TAG="X-Global-filter"
+
+# what shell to use for system commands
+SHELL=/bin/sh
+
+# The exit code that will tell qmail-local to stop processing a user's
+# .qmail and don't try delivering the given message any more:
+#    99 = tell qmail that the message was delivered successfully (blackhole it)
+#   100 = tell qmail that the delivery failed permanently (reject it)
+# (See qmail-command(8) for more info.)
+EXIT_BLACKHOLE=99
+EXIT_REJECT=100
+
+# Immediately deliver mail from system accounts to the user's mailbox,
+# bypassing any filters they may have
+# (This looks a lot like the always-allow rule)
+exception {
+    import SENDER
+    SHELL=/bin/sh
+    ALLOWED='/usr/local/etc/maildroprcs/senders+'
+
+    # is the envelope sender in the allowed senders list?
+    if (lookup($SENDER, $ALLOWED))
+    {
+        xfilter "reformail -A '$JUNK_TAG: allowed: sender \"$SENDER\" overrides filters'"
+        to $DEFAULT
+    }
+
+    # what about the header sender?
+    /^From: .*/
+    foreach (getaddr $MATCH) =~ /.+/
+    {
+        if (lookup($MATCH, $ALLOWED))
+        {
+          xfilter "reformail -A '$JUNK_TAG: allowed: sender \"$MATCH\" overrides filters'"
+          to $DEFAULT
+        }
+    }
+}
+
+# check for amavis filter results and redirect
+include("/usr/local/etc/maildroprcs/sitewide")

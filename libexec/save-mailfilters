@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# This is a simple script that could be called by the SquirrelMail spamrule
+# plugin to save a user's mail filters.
+
+PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
+export PATH
+
+mail-filter-add "$@"

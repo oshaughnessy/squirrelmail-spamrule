@@ -1,0 +1,94 @@
+#!/bin/ksh -f
+
+##
+# mail-filter-list:  show all available mail filters
+# 
+# This is a handy way to get a list of available filters for passing to
+# mail-filter-add.
+# 
+# $Id: mail-filter-list,v 1.5 2002/11/17 04:18:05 shaug Exp $
+##
+
+
+# set up the environment
+ME=mail-filter-list
+VERSION=$(set $Revision: 1.5 $; print $2)
+USAGE="usage: $ME"
+. /usr/local/etc/improv-env
+trap sigdie INT QUIT 
+umask 022
+
+# process the command line
+[[ "$1" = "--help" ]] && { perldoc -U -t -F $0; exit $EX_OK; }
+while getopts FIX:vh opt; do
+    case $opt in
+    h)      die $EX_OK "$USAGE";;
+    v)      die $EX_OK "version $VERSION";;
+    ?)
+    esac
+done
+shift $(expr $OPTIND - 1)
+
+# record that someone has been here
+find_caller
+logger -p local7.info -t $ME \
+ "[$$] $remote_user@$remote_host: ARGS=\`$@'"
+
+
+##
+## Start the fun!
+##
+
+(cd $MAILFILTER_DIR; find . -type f -print | sed -e 's,^./,,')
+exit 0
+
+
+# Perl-style Plain Old Documentation (POD) lives below here.
+<<PODblock
+
+=head1 mail-filter-list
+
+mail-filter-list - show a list of available mail filters
+
+
+=head1 SYNOPSIS
+
+B<mail-filter-list>
+
+
+=head1 DESCRIPTION
+
+Individual users at aloha.net can have customized mail filters, but
+they can't just do *anything*.  We provide a set of predefined filters,
+all of which are visible through this command.
+
+
+=head1 FILES
+
+=over 4
+
+=item F</usr/local/etc/maildroprcs/>
+
+The directory that holds all the mail filters.
+
+=back
+
+
+=head1 BUGS
+
+Please contact the author if you encounter errors or have feature
+suggestions.
+
+
+=head1 SEE ALSO
+
+L<mail-filter-add>, L<mail-filter-show>, L<mail-filter-del>
+
+
+=head1 AUTHOR
+
+Copyright (c) 2002 O'Shaughnessy Evans <shaug@aloha.net>,
+Hawaii OnLine
+
+=cut
+PODblock

@@ -1,0 +1,18 @@
+This directory includes a sample script and supporting programs to install 
+a user's chosen mail filters.  It would be used by the squirrelmail spamrule
+plugin by referring to it within config.php:
+
+  // The command to run to install the new set of filters:
+  //  %s will be replaced with the names of all the filters being installed,
+  //  as named in the keys of $SPAMRULE_FILTERS[].
+  $SPAMRULE_INSTALL['command'] =
+   "/usr/local/www/libexec/save-mailfilters -l {$GLOBALS['username']} %s";
+
+The sample script in this directory, save-mailfilters, is simply a wrapper
+around mail-filter-add, a script I use within my own system provisioning
+environment to modify a user's maildrop filter list.  You're welcome to use
+it as well, but it might take a little tweaking to work for you.  It's only
+provided as an example.  If you want to try it, copy improv-env to
+/usr/local/etc or change the paths in the mail-filter-* commands.
+mail-filter-add will find a user's home directory and list the named filters
+in the user's .mailfilter file via include() directives.

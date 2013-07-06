@@ -1,0 +1,26 @@
+Version 0.5 / Sept 13, 2007
+  - made the translation support much more sensible
+  - resolved all the PHP warnings
+  - added compatibility plugin back in, using compatibility 2.x now.
+  - added example files:  config.php.ex and config_local.php.ex, and 
+    the ability to override config.php in config_local.php
+
+Version 0.4 / Sept 11, 2007
+  - updated code to follow recommended standards for squirrelmail plugins
+    based on guidelines at http://squirrelmail.org/docs/devel/devel-2.html
+  - added support for translations
+  - fixed a bug in the list editor where it couldn't add new entries to
+    a file if the file didn't already exist
+
+Version 0.3 / Oct 3, 2003
+  - added support for squirrelmail 1.4
+  - added a "Spam Rules" entry to the menuline (top of right frame)
+  - switched from reading $GLOBALS, $_GET, etc., to using sqgetGlobalVar
+  - cleaned up the UI a little
+  - fixed a bug where backslashes could start to grow exponentially in the
+    maildrop list files
+  - switched config.php defaults from supporting qmail to sendmail/postfix
+    (syntax of the .forward file is slightly different than .qmail)
+
+Version 0.2
+  - first public release

@@ -1,0 +1,171 @@
+#!/bin/ksh -f
+
+##
+# mail-filter-show:  print the list of filters that a user is using
+# 
+# $Id: mail-filter-show,v 1.1 2002/11/17 04:16:08 shaug Exp shaug $
+##
+
+trap sigdie INT QUIT 
+umask 022
+
+# set up the environment
+ME=${0##*/}
+VERSION=$(set $Revision: 1.1 $; print $2)
+USAGE="usage: $ME <login>"
+HELP=$(cat <<EOhelp
+$ME: print the list of filters in use by an account
+
+Usage: $ME <login>
+       $ME -v
+       $ME -h
+       $ME --help
+
+Options:
+       -v             Show the script version ($VERSION)
+       -h             Show this "help" message
+       --help         Show more comprehensive usage information
+       FIX            describe other options here
+EOhelp)
+. /usr/local/etc/improv-env
+
+# process the command line
+[[ "$1" = "--help" ]] && { perldoc -U -t -F $0; exit $EX_OK; }
+while getopts :vh opt; do
+    case $opt in
+    v)      die $EX_OK "version $VERSION";;
+    ?)      die $EX_USAGE "$OPTARG is an invalid option" "$USAGE" \
+                          "See '$ME -h' for more info.";;
+    esac
+done
+shift $(( $OPTIND - 1 ))
+
+login="$1"
+
+# make sure required options are set.
+# e.g....
+[[ -n "$login" ]] || die $EX_USAGE "failure: a login is required" "$USAGE"
+
+# record that someone has been here
+find_caller
+logger -p local7.info -t $ME \
+ "[$$] $remote_user@$remote_host: FIX=\`$enter processed cmd-line args here'"
+
+
+##
+## Start the fun!
+##
+
+# only continue if the login belongs to a customer
+is-customer "$login" || exit $?
+
+homedir=$(/usr/bin/getent passwd "$login" |cut -d: -f6)
+cd $homedir \
+ || die $EX_DATAERR "failure: no homedir for $login"
+
+test -f $MAILDROP_RC \
+ || die $EX_DATAERR "failure: no mail filters for $login"
+
+perl -ane '/^include\("([^"]*)"/ or next; $p=$1;
+           $p =~ s,.*/([^/]+),$1, and print "$p\n"' $MAILDROP_RC
+
+#die $EX_OK "success"
+
+
+# Perl-style Plain Old Documentation (POD) lives below here.
+#
+# FIX:  Fill out the POD info below -- change everything in the example
+# from mail-virtuser-add to reflect your own program.
+
+<<PODblock
+
+=head1 FIX(command name)
+
+FIX - command name and one-line description goes here
+
+
+=head1 SYNOPSIS
+
+B<FIX(command name)> I<arg1> I<arg2> [I<opt1> I<opt2> ...]
+
+B<FIX(command name)> -v
+
+B<FIX(command name)> -h
+
+B<FIX(command name)> --help
+
+
+=head1 DESCRIPTION
+
+FIX:  put a paraphraph or two describing how the command works, what it
+does, what it expects, what it won't do, etc.
+
+
+=head1 OPTIONS
+
+=over 4
+
+=item FIX: list options here
+
+FIX: description for an option
+
+=item FIX: another option
+
+FIX: another option's description
+
+=item -v
+
+Show the version of the script
+
+=item -h
+
+Show a brief summary of usage
+
+=item --help
+
+Show a comprehensive manual for the script
+
+=back
+
+
+=head1 FILES
+
+=over 4
+
+=item F<FIX(list files here)>
+
+FIX: description of file
+
+=back
+
+
+=head1 DIAGNOSTICS
+
+Any output that doesn't start with "FIX(name of command): success" indicates
+a problem of some kind.  If it is a fatal error, it will begin with
+"FIX(name of command): failure".
+
+
+=head1 REQUIRES
+
+FIX: list required programs here
+
+
+=head1 BUGS
+
+Please contact the author if you encounter errors or have feature
+suggestions.
+
+
+=head1 SEE ALSO
+
+FIX: list related commands here
+
+
+=head1 AUTHOR
+
+Copyright © 2002 O'Shaughnessy Evans <shaug@aloha.net>,
+Hawaii Online
+
+=cut
+PODblock

@@ -1,0 +1,207 @@
+#!/bin/ksh -f
+
+##
+# mail-filter-add:  enable mail filtering for a user
+# 
+# $Id: mail-filter-add,v 1.5 2003/05/17 00:04:10 shaug Exp $
+##
+
+
+# set up the environment
+ME=mail-filter-add
+VERSION=$(set $Revision: 1.5 $; print $2)
+USAGE="usage: $ME -l <login> <filter> [ <filter> ... ]"
+HELP=$(cat <<EOhelp
+$ME: print the list of filters in use by an account
+
+Usage: $ME -l <login> [-k] <filter> [ <filter> ... ]
+       $ME -v
+       $ME -h
+       $ME --help
+
+Options:
+       -v             Show the script version ($VERSION)
+       -h             Show this "help" message
+       --help         Show more comprehensive usage information
+       FIX            describe other options here
+EOhelp)
+MAILDROP_CMD='| /usr/local/bin/maildrop'
+unset KEEP
+filters=""
+. /usr/local/etc/improv-env
+trap sigdie INT QUIT 
+umask 022
+
+# process the command line
+[[ "$1" = "--help" ]] && { perldoc -U -t -F $0; exit $EX_OK; }
+while getopts :l:kvh opt; do
+    case $opt in
+    l)      login=$OPTARG;;
+    k)      KEEP=true;;
+    h)      die $EX_OK "$USAGE";;
+    v)      die $EX_OK "version $VERSION";;
+    ?)
+    esac
+done
+shift $(expr $OPTIND - 1)
+
+filters="$@"
+
+# make sure required options are set.
+[ -n "$login" ]   || die $EX_USAGE "failure: a login is required" "$USAGE"
+[ -n "$filters" ] || die $EX_USAGE "failure: at least one filter is required" \
+                                   "$USAGE"
+
+# record that someone has been here
+find_caller
+logger -p local7.info -t $ME \
+ "[$$] $remote_user@$remote_host: login=\`$login' filters=\`$filters'"
+
+
+##
+## Start the fun!
+##
+
+# only continue if the login belongs to a customer
+is-customer "$login" || exit $?
+
+# back up the original maildroprc if it exists
+homedir=$(/usr/bin/getent passwd "$login" |cut -d: -f6)
+cd $homedir
+
+# add a little comment to the top of the new maildrop filter file
+cat > $MAILDROP_RC.new <<EOheader
+# maildrop filter file
+# created on `date` by $ME
+EOheader
+
+# run through the list of filters:
+#   if we find "GLOBAL", opt the user back into the system-wide mail filters
+#    ("spamrule")
+#   otherwise, make sure the filter exists; if it does, add an include for it
+#    to the end of the new filter config
+ignored=""
+added=""
+unset global
+for f in $filters; do
+    if [[ "$f" = "GLOBAL" ]]; then
+	mail-spamfriend-del "$login"
+	global=""
+        continue
+    elif [[ "$f" = "*..*" || "$f" = "*/*" || ! -f "$MAILFILTER_DIR/$f" ]]; then
+        warn "Sorry, '$f' is not a valid filter."
+	ignored="$ignored $f"
+	continue
+    else
+	printf "include(\"$MAILFILTER_DIR/%s\")\n" $f >> $MAILDROP_RC.new
+	added="$added $f"
+    fi
+done
+
+# exit without making any maildrop changes if there were no valid filters
+# (note that the user will still be opted back into the global filters if
+# that was chosen)
+if [[ -z "$added" ]]; then
+    die $EX_DATAERR "failure: no filters added."
+fi
+
+# install the new maildrop config
+if [[ -f $MAILDROP_RC ]]; then
+    cp -f $MAILDROP_RC $MAILDROP_RC.old \
+     || die "failure: couldn't back up original maildrop filter file"
+fi
+if [[ -n "$KEEP" ]]; then
+    cat $MAILDROP_RC.new >> $MAILDROP_RC && rm -f $MAILDROP_RC.new \
+     || die "failure: couldn't append maildrop filter rules"
+else
+    rm -f $MAILDROP_RC && mv $MAILDROP_RC.new $MAILDROP_RC \
+     || die "failure: couldn't create new maildrop filter file"
+fi
+
+group=$(/usr/xpg4/bin/id -ng "$login")
+chown -R $login:$group $MAILDROP_RC
+chmod 0600 $MAILDROP_RC
+
+# last, create a forward file that filters mail through maildrop before
+# falling through to the inbox if it doesn't get dumped
+mail-forward-add "$login" "$MAILDROP_CMD" >/dev/null \
+ || die "failure: couldn't create the maildrop forward"
+
+die $EX_OK "success: filters added."
+
+
+# Perl-style Plain Old Documentation (POD) lives below here.
+#
+<<PODblock
+
+=head1 mail-filter-add
+
+mail-filter-add - setup user's incoming mail to run through a set of filters
+
+
+=head1 SYNOPSIS
+
+B<mail-filter-add> -l I<login> -f I<filter> [-f I<filter> ...]
+
+
+=head1 DESCRIPTION
+
+After this command is run, all incoming mail for I<login> will be run
+through each I<filter> before being allowed into the user's mailbox.  Each
+filter looks for a unique set of conditions, then either bounces or
+blackholes the message if those are met.  If none of the filters thus
+reject the mail, it is allowed into the user's mailbox.
+
+This command creates a config file for the "maildrop" program under the
+user's HOME -- .mailfilters/systemfilters.  Each entry in this file specifies
+one of the predefined filters.  The set of available filters can be seen
+with the mail-filter-list command.  It also creates a forward file in the
+user's HOME that passes all mail to maildrop before letting it reach the
+Incoming mailbox.
+
+
+=head1 FILES
+
+=over 4
+
+=item F<.mailfilters/systemfilters>
+
+Maildrop config file.  If it already exists, the original is moved to
+systemfilters.old.
+
+=item F<.forward>
+
+Sendmail or postfix local-delivery config file that invokes mailfilter.
+If it already exists, the original is moved to .forward_improv.
+
+=item F<.qmail>
+
+Qmail local-delivery config file that invokes mailfilter.  If it already
+exists, the original is moved to .qmail_improv.
+
+=back
+
+
+=head1 REQUIRES
+
+mail-forward-add
+
+
+=head1 BUGS
+
+Please contact the author if you encounter errors or have feature
+suggestions.
+
+
+=head1 SEE ALSO
+
+L<mail-forward-add>, L<mail-filter-del>, L<mail-filter-list>
+
+
+=head1 AUTHOR
+
+Copyright (c) 2002 O'Shaughnessy Evans <shaug@aloha.net>,
+Hawaii OnLine
+
+=cut
+PODblock

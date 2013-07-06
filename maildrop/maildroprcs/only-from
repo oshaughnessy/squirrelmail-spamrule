@@ -1,0 +1,36 @@
+# $Id: only-from,v 1.5 2002/12/14 01:26:30 root Exp $
+#
+# Immediately accept mail that's in the user's "senders+" data file,
+# and reject everything else.
+exception {
+    import SENDER
+    SHELL=/bin/sh
+
+    # is the envelope sender in the allowed senders list?
+    if (lookup($SENDER, '.mailfilters/senders+'))
+    {
+	xfilter "reformail -A '$JUNK_TAG: allowed: only accept from $SENDER'"
+        to $DEFAULT
+    }
+    else 
+    {
+	xfilter "reformail -A '$JUNK_TAG: rejected: $SENDER not explicitly allowed'"
+	to $JUNK
+    }
+
+    # what about the header sender?
+    /^From: .*/
+    foreach (getaddr $MATCH) =~ /.+/
+    {
+        if (lookup($MATCH, '.mailfilters/senders+'))
+        {
+            xfilter "reformail -A '$JUNK_TAG: allowed: only accept from $MATCH'"
+            to $DEFAULT
+        }
+        else 
+        {
+            xfilter "reformail -A '$JUNK_TAG: rejected: $MATCH not explicitly allowed'"
+            to $JUNK
+        }
+    }
+}

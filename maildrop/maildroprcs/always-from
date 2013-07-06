@@ -1,0 +1,26 @@
+# $Id: always-from,v 1.4 2002/12/14 01:26:30 root Exp $
+#
+# Immediately accept mail that's from any of the addresses listed
+# in the user's config
+exception {
+    import SENDER
+    SHELL=/bin/sh
+
+    # is the envelope sender in the allowed senders list?
+    if (lookup($SENDER, '.mailfilters/senders+'))
+    {
+        xfilter "reformail -A '$JUNK_TAG: allowed: always accept from $SENDER'"
+        to $DEFAULT
+    }
+
+    # what about the header sender?
+    /^From: .*/
+    foreach (getaddr $MATCH) =~ /.+/
+    {
+        if (lookup($MATCH, '.mailfilters/senders+'))
+        {
+          xfilter "reformail -A '$JUNK_TAG: allowed: always accept from $MATCH'"
+          to $DEFAULT
+        }
+    }
+}
