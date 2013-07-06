@@ -74,7 +74,7 @@ https://github.com/oshaughnessy/squirrelmail-spamrule.
 
 ## Copyright
 
-Copyright (c) 2002-2007 O'Shaughnessy Evans <shaug-sqml @ wumpus.org>
+Copyright (c) 2002-2013 O'Shaughnessy Evans <shaug-sqml @ wumpus.org>
 
 
 ## License
