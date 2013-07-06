@@ -7,6 +7,8 @@ directory.  This way the user can have his mail filtered at message delivery
 time by the email system rather than at reading time by SquirrelMail, which
 could really slow things down.
 
+See also:  http://www.squirrelmail.org/plugin_view.php?id=190
+
 
 ## Requirements
 
